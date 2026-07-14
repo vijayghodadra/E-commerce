@@ -254,11 +254,11 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Banner Section with peeking slides and rich aesthetics */}
-      <section className="relative overflow-hidden w-full py-6 bg-[#fdfbf9]">
+      {/* Hero Banner Section */}
+      <section className="relative overflow-hidden w-full py-4 sm:py-6 bg-[#fdfbf9]">
         <div 
-          className={`flex ${isTransitioning ? 'transition-transform duration-200 ease-in-out' : ''} px-[5%] sm:px-[10%]`}
-          style={{ transform: `translateX(-${currentIndex * 80}%)` }}
+          className={`flex ${isTransitioning ? 'transition-transform duration-200 ease-in-out' : ''} sm:px-[10%]`}
+          style={{ transform: `translateX(-${currentIndex * 100}vw)` }}
           onTransitionEnd={handleTransitionEnd}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -267,43 +267,43 @@ export default function Home() {
           {paddedSlides.map((slide, idx) => (
             <div
               key={idx}
-              className={`w-[80vw] flex-shrink-0 px-2 sm:px-4 transition-all duration-200 ${
-                idx === currentIndex ? 'scale-100 opacity-100' : 'scale-[0.96] opacity-60'
+              className={`w-full sm:w-[80vw] flex-shrink-0 px-2 sm:px-4 transition-all duration-200 ${
+                idx === currentIndex ? 'scale-100 opacity-100' : 'scale-[0.97] opacity-50'
               }`}
             >
               <div 
                 style={{ backgroundColor: slide.bgColor }}
-                className="rounded-[16px] sm:rounded-[24px] overflow-hidden shadow-sm border border-[#F0E6DD] flex flex-col md:flex-row items-center justify-between h-[360px] sm:h-[420px] md:h-[480px] p-6 sm:p-12 relative"
+                className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-[#F0E6DD] flex flex-col md:flex-row items-center justify-between h-[300px] sm:h-[380px] md:h-[480px] p-5 sm:p-10 md:p-12 relative"
               >
                 {/* Left Content */}
-                <div className="flex-1 space-y-3 sm:space-y-6 text-left z-10 max-w-lg">
+                <div className="flex-1 space-y-2 sm:space-y-5 text-left z-10 max-w-lg">
                   <span className="text-[#8B5E3C] font-black tracking-widest text-[10px] sm:text-xs uppercase block">
                     {slide.subtitle}
                   </span>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-serif text-[#4A2E2B] leading-tight">
+                  <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold font-serif text-[#4A2E2B] leading-tight">
                     {slide.title}
                   </h1>
                   
                   {/* Discount Badge */}
-                  <div className="inline-flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 my-2">
-                    <span className="bg-[#4A2E2B] text-cream text-lg sm:text-2xl font-black px-4 py-1.5 rounded-md leading-none shadow-sm uppercase">
+                  <div className="inline-flex flex-wrap items-center gap-2 sm:gap-4 my-1">
+                    <span className="bg-[#4A2E2B] text-cream text-base sm:text-2xl font-black px-3 py-1 rounded-md leading-none shadow-sm uppercase">
                       {slide.discount}
                     </span>
                     {slide.promoCode && (
-                      <span className="border-2 border-dashed border-[#8B5E3C] text-[#8B5E3C] text-[11px] sm:text-xs font-bold px-3 py-1 bg-white/40 rounded-sm">
+                      <span className="border-2 border-dashed border-[#8B5E3C] text-[#8B5E3C] text-[10px] sm:text-xs font-bold px-2.5 py-1 bg-white/40 rounded-sm">
                         USE CODE: <span className="font-extrabold text-[#4A2E2B]">{slide.promoCode}</span>
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs sm:text-sm text-[#5C4033] font-medium leading-relaxed max-w-md">
+                  <p className="text-xs sm:text-sm text-[#5C4033] font-medium leading-relaxed max-w-md hidden sm:block">
                     {slide.description}
                   </p>
 
-                  <div className="pt-2 sm:pt-4">
-                    <Link to={slide.link} className="bg-[#4A2E2B] hover:bg-[#2E1E1C] text-cream px-6 py-3 font-semibold text-xs rounded-full uppercase tracking-wider transition-colors inline-flex items-center space-x-2">
+                  <div className="pt-1 sm:pt-3">
+                    <Link to={slide.link} className="bg-[#4A2E2B] hover:bg-[#2E1E1C] text-cream px-5 py-2.5 font-semibold text-xs rounded-full uppercase tracking-wider transition-colors inline-flex items-center gap-2">
                       <span>Explore Now</span>
-                      <ArrowRight size={14} />
+                      <ArrowRight size={13} />
                     </Link>
                   </div>
                 </div>
@@ -421,8 +421,8 @@ export default function Home() {
               <Link
                 key={cat._id || idx}
                 to={`/shop?category=${cat.slug}`}
-                className="group relative block overflow-hidden rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500"
-                style={{ height: '420px' }}
+                className="group relative block overflow-hidden rounded-xl sm:rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500"
+                style={{ height: 'clamp(220px, 40vw, 420px)' }}
               >
                 {/* Image */}
                 <img
@@ -483,12 +483,12 @@ export default function Home() {
       {/* Best Sellers Section */}
       <section className="bg-cream/40 py-16 border-t border-b border-cream-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
+          <div className="flex flex-wrap justify-between items-end gap-2 mb-8 sm:mb-12">
             <div>
-              <h2 className="text-3xl font-bold font-serif text-primary">Best Sellers</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-primary">Best Sellers</h2>
               <p className="text-gray-500 text-sm mt-1">Our most loved Ayurvedic formulations.</p>
             </div>
-            <Link to="/shop" className="text-primary hover:text-secondary-dark font-semibold text-sm flex items-center space-x-1 group">
+            <Link to="/shop" className="text-primary hover:text-secondary-dark font-semibold text-sm flex items-center gap-1 group shrink-0">
               <span>View All</span>
               <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -562,12 +562,12 @@ export default function Home() {
       {/* New Arrivals Section */}
       <section className="py-16 bg-cream-light/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-end mb-12">
+          <div className="flex flex-wrap justify-between items-end gap-2 mb-8 sm:mb-12">
             <div>
-              <h2 className="text-3xl font-bold font-serif text-primary">New Arrivals</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold font-serif text-primary">New Arrivals</h2>
               <p className="text-gray-500 text-sm mt-1">Direct from our botanical farms.</p>
             </div>
-            <Link to="/shop?sortBy=newest" className="text-primary hover:text-secondary-dark font-semibold text-sm flex items-center space-x-1 group">
+            <Link to="/shop?sortBy=newest" className="text-primary hover:text-secondary-dark font-semibold text-sm flex items-center gap-1 group shrink-0">
               <span>View All</span>
               <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
             </Link>

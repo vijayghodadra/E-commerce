@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, Star } from 'lucide-react';
+import { Heart, Star, ShoppingBag } from 'lucide-react';
 
 export default function ProductCard({
   product,
@@ -14,145 +14,113 @@ export default function ProductCard({
   const isDiscounted = product.discountPrice > 0;
   const activePrice = isDiscounted ? product.discountPrice : product.price;
 
-  // Determine mock benefit subtitle based on tags or category name
   const getTagline = () => {
-    if (product.category?.name === 'Skin Care' || product.category === 'skin-care') {
-      return 'Nurtures & Repairs | Moisturises';
-    }
-    if (product.category?.name === 'Hair Care' || product.category === 'hair-care') {
-      return 'Controls Hair Fall | Mildly Foaming | Non-drying';
-    }
-    return 'Weightless-matte | Hydrating | Long-lasting';
-  };
-
-  // Determine mock size variants
-  const getVariants = () => {
-    if (product.category?.name === 'Skin Care' || product.category === 'skin-care') {
-      return ['50g x Pack of 1', '100g x Pack of 2'];
-    }
-    if (product.category?.name === 'Hair Care' || product.category === 'hair-care') {
-      return ['200ml x Pack of 1', '200ml x Pack of 2'];
-    }
-    return ['16 shades x Pack of 1', '16 shades x Pack of 2'];
+    if (product.category?.name === 'Skin Care') return 'Nurtures & Repairs | Moisturises';
+    if (product.category?.name === 'Hair Care') return 'Controls Hair Fall | Non-Drying';
+    if (product.category?.name === 'Bath & Body') return 'Hydrates & Softens | Natural';
+    return 'Calming | Aromatic | Pure';
   };
 
   return (
-    <div className="bg-white border border-[#EDEDED] rounded-[16px] relative flex flex-col justify-between h-full p-4 hover:shadow-md transition-shadow group duration-300">
-      
-      {/* Top Left Save Badge */}
-      {isDiscounted && (
-        <div className="absolute top-4 left-4 z-20">
-          <span className="bg-[#E7F6EE] text-[#0F5132] text-[10px] sm:text-[11px] font-bold px-2.5 py-1 rounded-full">
+    <div className="bg-white border border-[#EDEDED] rounded-2xl relative flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
+
+      {/* Badges Row */}
+      <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
+        {isDiscounted ? (
+          <span className="bg-[#E7F6EE] text-[#0F5132] text-[10px] font-bold px-2 py-0.5 rounded-full">
             Save ₹{discountAmount}
           </span>
-        </div>
-      )}
-
-      {/* Top Right Best Seller Badge */}
-      {product.rating >= 4.5 && (
-        <div className="absolute top-4 right-4 z-20">
-          <span className="bg-[#E2ECE6] text-[#2E4A3F] text-[9px] sm:text-[10px] font-black px-2.5 py-1 rounded-[4px] uppercase tracking-wide">
+        ) : <span />}
+        {product.rating >= 4.5 && (
+          <span className="bg-[#E2ECE6] text-[#2E4A3F] text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wide">
             Best Seller
           </span>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Wishlist Button - Raw outline icon matching reference */}
+      {/* Wishlist Button */}
       <button
-        onClick={(e) => {
-          e.preventDefault();
-          onToggleWishlist(product._id);
-        }}
-        className={`absolute z-20 text-gray-900 hover:text-red-500 transition-colors ${
-          product.rating >= 4.5 ? 'top-12 right-4' : 'top-4 right-4'
-        }`}
+        onClick={(e) => { e.preventDefault(); onToggleWishlist(product._id); }}
+        className="absolute z-20 bottom-[88px] right-3 w-8 h-8 flex items-center justify-center bg-white/90 rounded-full shadow-sm border border-gray-100 hover:scale-110 transition-transform"
+        aria-label="Toggle wishlist"
       >
         <Heart
-          size={19}
-          strokeWidth={1.5}
-          className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-900'}
+          size={16}
+          strokeWidth={1.8}
+          className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
         />
       </button>
 
-      {/* Image Container - Aspect Square & Centered with White Background */}
+      {/* Image */}
       <Link
         to={`/product/${product.slug}`}
-        className="block relative overflow-hidden aspect-square w-full bg-white rounded-[12px] shrink-0 mb-3 flex items-center justify-center"
+        className="block relative bg-[#FAFAFA] shrink-0"
+        style={{ paddingBottom: '100%' }}
       >
         <img
-          src={product.images && product.images[0] ? (product.images[0].includes('unsplash.com') ? product.images[0].replace(/w=\d+/, 'w=1200').replace(/q=\d+/, 'q=90') : product.images[0]) : ''}
+          src={
+            product.images && product.images[0]
+              ? product.images[0].includes('unsplash.com')
+                ? product.images[0].replace(/w=\d+/, 'w=800').replace(/q=\d+/, 'q=85')
+                : product.images[0]
+              : 'https://placehold.co/400x400?text=No+Image'
+          }
           alt={product.name}
-          className="max-h-[85%] max-w-[85%] object-contain group-hover:scale-105 transition-transform duration-500"
+          className="absolute inset-0 w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500"
+          loading="lazy"
         />
         {product.stockStatus === 'out_of_stock' && (
-          <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-[12px]">
-            <span className="bg-primary text-cream text-[9px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-sm">
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-[1px] flex items-center justify-center">
+            <span className="bg-[#2D4A3F] text-white text-[9px] uppercase font-bold tracking-widest px-3 py-1 rounded-full">
               Out of Stock
             </span>
           </div>
         )}
       </Link>
 
-      {/* Info details */}
-      <div className="flex-grow flex flex-col justify-between mt-1">
-        <div className="space-y-1">
-          {/* Title */}
-          <Link to={`/product/${product.slug}`} className="block">
-            <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 hover:text-[#0F5132] transition-colors min-h-[40px] leading-snug tracking-tight font-sans">
-              {product.name}
-            </h3>
-          </Link>
+      {/* Info */}
+      <div className="flex flex-col flex-1 p-3 pt-2 gap-1">
+        {/* Name */}
+        <Link to={`/product/${product.slug}`}>
+          <h3 className="text-[13px] font-semibold text-gray-900 line-clamp-2 leading-snug hover:text-[#0F5132] transition-colors">
+            {product.name}
+          </h3>
+        </Link>
 
-          {/* Benefit tagline */}
-          <p className="text-xs text-[#0F5132] font-normal leading-relaxed mt-1 block truncate">
-            {getTagline()}
-          </p>
+        {/* Tagline */}
+        <p className="text-[11px] text-[#0F5132] leading-tight truncate">{getTagline()}</p>
 
-          {/* Ratings */}
-          <div className="flex items-center space-x-1 mt-2">
-            <Star size={13} className="fill-[#F5A623] text-[#F5A623]" />
-            <span className="text-xs font-bold text-gray-800">{product.rating.toFixed(1)}</span>
-            <span className="text-xs text-gray-400">({product.numReviews})</span>
-          </div>
-
-          {/* Size Variant Selector Pills */}
-          <div className="flex flex-wrap gap-1.5 pt-2">
-            {getVariants().map((variant, idx) => (
-              <span
-                key={idx}
-                className={`text-[10px] font-medium px-3 py-1 rounded-full border transition-all ${
-                  idx === 0 
-                    ? 'bg-white border-[#0F5132] text-[#0F5132]' 
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
-                }`}
-              >
-                {variant}
-              </span>
-            ))}
-          </div>
+        {/* Stars */}
+        <div className="flex items-center gap-1">
+          <Star size={11} className="fill-[#F5A623] text-[#F5A623] shrink-0" />
+          <span className="text-[11px] font-bold text-gray-800">{product.rating.toFixed(1)}</span>
+          <span className="text-[11px] text-gray-400">({product.numReviews})</span>
         </div>
 
-        {/* Pricing and Add button */}
-        <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="bg-[#F3F9F6] border border-[#0F5132] text-xs sm:text-sm font-bold text-gray-900 px-3 py-1 rounded-full">
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Price + Add Row */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 mt-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="bg-[#F3F9F6] border border-[#0F5132] text-[12px] font-bold text-gray-900 px-2.5 py-0.5 rounded-full whitespace-nowrap">
               ₹{activePrice}
             </span>
             {isDiscounted && (
-              <span className="text-xs text-gray-400 line-through">₹{product.price}</span>
+              <span className="text-[11px] text-gray-400 line-through whitespace-nowrap">₹{product.price}</span>
             )}
           </div>
 
           <button
             onClick={() => onAddToCart(product._id)}
             disabled={product.stockStatus === 'out_of_stock'}
-            className="bg-[#2D6A4F] hover:bg-[#1B4332] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-xs px-5 py-1.5 rounded-full transition-colors"
+            className="shrink-0 bg-[#2D6A4F] hover:bg-[#1B4332] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-[11px] px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 whitespace-nowrap"
           >
+            <ShoppingBag size={11} />
             Add
           </button>
         </div>
       </div>
-
     </div>
   );
 }

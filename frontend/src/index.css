@@ -8,10 +8,20 @@
   body {
     @apply bg-cream-light text-charcoal font-sans antialiased;
     scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif text-primary;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  img {
+    max-width: 100%;
   }
 }
 
@@ -78,4 +88,41 @@
   display: flex;
   width: max-content;
   animation: marquee 35s linear infinite;
+}
+
+/* Mobile filter drawer slides up */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Scroll reveal for product cards */
+@keyframes cardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card-reveal {
+  animation: cardReveal 0.4s ease-out forwards;
+}
+
+/* Better mobile input focus */
+input, select, textarea {
+  font-size: 16px; /* prevents iOS zoom on focus */
 }
