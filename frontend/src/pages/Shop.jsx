@@ -79,12 +79,14 @@ export default function Shop() {
         const res = await API.get('/products', { params });
         if (res.data.success) {
           const cleaned = (res.data.products || []).map(p => {
-            if (p.images) {
+            if (Array.isArray(p.images)) {
               p.images = p.images.map(img =>
-                img.includes('unsplash.com')
+                (typeof img === 'string' && img.includes('unsplash.com'))
                   ? img.replace(/w=\d+/, 'w=800').replace(/q=\d+/, 'q=85')
-                  : img
+                  : (img || '')
               );
+            } else {
+              p.images = [];
             }
             return p;
           });

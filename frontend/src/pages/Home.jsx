@@ -157,8 +157,14 @@ export default function Home() {
         ]);
         if (trendingRes.data.success) {
           const cleanList = (list) => list.map(p => {
-            if (p.images) {
-              p.images = p.images.map(img => img.includes('unsplash.com') ? img.replace(/w=\d+/, 'w=1200').replace(/q=\d+/, 'q=90') : img);
+            if (Array.isArray(p.images)) {
+              p.images = p.images.map(img =>
+                (typeof img === 'string' && img.includes('unsplash.com'))
+                  ? img.replace(/w=\d+/, 'w=1200').replace(/q=\d+/, 'q=90')
+                  : (img || '')
+              );
+            } else {
+              p.images = [];
             }
             return p;
           });

@@ -106,7 +106,11 @@ export default function Wishlist() {
 
                 <div>
                   <Link to={`/product/${prod.slug}`} className="block relative overflow-hidden h-60 bg-cream-light">
-                    <img src={prod.images[0]} alt={prod.name} className="w-full h-full object-cover" />
+                    <img
+                      src={(Array.isArray(prod.images) && typeof prod.images[0] === 'string') ? prod.images[0] : 'https://placehold.co/400x400?text=No+Image'}
+                      alt={prod.name}
+                      className="w-full h-full object-cover"
+                    />
                   </Link>
 
                   <div className="p-4">

@@ -399,7 +399,7 @@ export default function Navbar() {
                       return (
                         <div key={item.product._id} className="flex items-start space-x-3.5 border-b border-cream-dark pb-5">
                           <img
-                            src={item.product.images[0]}
+                            src={(Array.isArray(item.product.images) && typeof item.product.images[0] === 'string') ? item.product.images[0] : 'https://placehold.co/400x400?text=No+Image'}
                             alt={item.product.name}
                             className="w-16 h-20 object-cover border border-cream-dark bg-cream-light rounded-sm shrink-0"
                           />

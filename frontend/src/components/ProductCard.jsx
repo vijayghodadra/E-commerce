@@ -59,7 +59,7 @@ export default function ProductCard({
       >
         <img
           src={
-            product.images && product.images[0]
+            (Array.isArray(product.images) && typeof product.images[0] === 'string')
               ? product.images[0].includes('unsplash.com')
                 ? product.images[0].replace(/w=\d+/, 'w=800').replace(/q=\d+/, 'q=85')
                 : product.images[0]

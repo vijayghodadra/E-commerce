@@ -484,7 +484,7 @@ export default function Checkout() {
                     <div key={item.product._id} className="py-4 flex justify-between items-center text-xs">
                       <div className="flex space-x-3 items-center">
                         <img
-                          src={item.product.images[0]}
+                          src={(Array.isArray(item.product.images) && typeof item.product.images[0] === 'string') ? item.product.images[0] : 'https://placehold.co/400x400?text=No+Image'}
                           alt={item.product.name}
                           className="w-12 h-14 object-cover border border-cream-dark bg-cream-light rounded-sm"
                         />
