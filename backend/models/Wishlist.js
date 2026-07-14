@@ -1,23 +1,7 @@
-const mongoose = require('mongoose');
+const { DocumentInstance, SupabaseModel } = require('../config/db');
 
-const wishlistSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      unique: true,
-    },
-    products: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product',
-      },
-    ],
-  },
-  {
-    timestamps: true,
-  }
-);
+class WishlistInstance extends DocumentInstance {}
 
-module.exports = mongoose.model('Wishlist', wishlistSchema);
+const Wishlist = new SupabaseModel('wishlists', WishlistInstance);
+
+module.exports = Wishlist;

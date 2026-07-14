@@ -1,31 +1,7 @@
-const mongoose = require('mongoose');
+const { DocumentInstance, SupabaseModel } = require('../config/db');
 
-const cartSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
-      unique: true,
-    },
-    items: [
-      {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'Product',
-          required: true,
-        },
-        qty: {
-          type: Number,
-          required: true,
-          default: 1,
-        },
-      },
-    ],
-  },
-  {
-    timestamps: true,
-  }
-);
+class CartInstance extends DocumentInstance {}
 
-module.exports = mongoose.model('Cart', cartSchema);
+const Cart = new SupabaseModel('carts', CartInstance);
+
+module.exports = Cart;
