@@ -31,6 +31,11 @@ const connectDB = async () => {
       connectionTimeoutMillis: 5000
     });
 
+    if (isServerless) {
+      console.log('Supabase pool initialized lazily for serverless environment');
+      return;
+    }
+
     const client = await pool.connect();
     console.log('Supabase PostgreSQL Connected successfully');
     client.release();
