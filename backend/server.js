@@ -56,6 +56,45 @@ app.use('/api/admin', adminRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // App Health Check
+app.get('/api/health', async (req, res) => {
+  try {
+    const connectDB = require('./config/db');
+    const pool = connectDB.getPool ? connectDB.getPool() : null;
+    if (!pool) {
+      return res.status(500).json({
+        success: false,
+        status: 'Database pool not initialized',
+        envExists: {
+          SUPABASE_CONNECTION_STRING: !!process.env.SUPABASE_CONNECTION_STRING,
+          MONGO_URI: !!process.env.MONGO_URI
+        }
+      });
+    }
+    const client = await pool.connect();
+    const dbRes = await client.query('SELECT NOW()');
+    client.release();
+    return res.json({
+      success: true,
+      status: 'Connected to Supabase successfully',
+      dbTime: dbRes.rows[0].now,
+      envExists: {
+        SUPABASE_CONNECTION_STRING: !!process.env.SUPABASE_CONNECTION_STRING,
+        MONGO_URI: !!process.env.MONGO_URI
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      status: 'Database connection failed',
+      error: error.message,
+      envExists: {
+        SUPABASE_CONNECTION_STRING: !!process.env.SUPABASE_CONNECTION_STRING,
+        MONGO_URI: !!process.env.MONGO_URI
+      }
+    });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Botanical Premium E-Commerce API is running...');
 });
