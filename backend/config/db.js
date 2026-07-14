@@ -10,21 +10,26 @@ function generateObjectId() {
 
 const connectDB = async () => {
   try {
+    const isServerless = !!process.env.VERCEL;
     pool = new Pool({
       connectionString: process.env.SUPABASE_CONNECTION_STRING,
-      ssl: { rejectUnauthorized: false }
+      ssl: { rejectUnauthorized: false },
+      max: isServerless ? 2 : 10,
+      idleTimeoutMillis: 5000,
+      connectionTimeoutMillis: 5000
     });
 
-    // Test connection
     const client = await pool.connect();
     console.log('Supabase PostgreSQL Connected successfully');
     client.release();
 
-    // Auto-initialize tables
     await initializeTables();
   } catch (error) {
     console.error(`PostgreSQL Connection Error: ${error.message}`);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 
@@ -461,6 +466,73 @@ class SupabaseModel {
 
   async insertMany(arr) {
     return await this.create(arr);
+  }
+
+  async aggregate(pipeline) {
+    const allDocs = await this.find({});
+    let results = [...allDocs];
+
+    for (const stage of pipeline) {
+      if (stage.$match) {
+        results = results.filter(doc => {
+          for (const [key, val] of Object.entries(stage.$match)) {
+            if (key === 'createdAt' && val && typeof val === 'object') {
+              if (val.$gte) {
+                const docDate = new Date(doc.createdAt);
+                if (docDate < new Date(val.$gte)) return false;
+              }
+              if (val.$lte) {
+                const docDate = new Date(doc.createdAt);
+                if (docDate > new Date(val.$lte)) return false;
+              }
+            } else {
+              if (doc[key] !== val) return false;
+            }
+          }
+          return true;
+        });
+      } else if (stage.$group) {
+        const groupKey = stage.$group._id;
+        const groups = {};
+
+        for (const doc of results) {
+          let idVal = '';
+          if (groupKey && typeof groupKey === 'object' && groupKey.$dateToString) {
+            const dateVal = new Date(doc.createdAt);
+            const yyyy = dateVal.getFullYear();
+            const mm = String(dateVal.getMonth() + 1).padStart(2, '0');
+            const dd = String(dateVal.getDate()).padStart(2, '0');
+            idVal = `${yyyy}-${mm}-${dd}`;
+          } else if (typeof groupKey === 'string' && groupKey.startsWith('$')) {
+            const field = groupKey.substring(1);
+            idVal = doc[field];
+          } else {
+            idVal = groupKey;
+          }
+
+          if (!groups[idVal]) {
+            groups[idVal] = { _id: idVal, count: 0, revenue: 0 };
+          }
+          groups[idVal].count += 1;
+          // Sum isPaid orders price
+          const sumField = stage.$group.revenue?.$sum || stage.$group.totalPrice?.$sum || '';
+          const sumVal = sumField && sumField.startsWith('$') ? Number(doc[sumField.substring(1)] || 0) : 0;
+          groups[idVal].revenue += sumVal;
+        }
+
+        results = Object.values(groups);
+      } else if (stage.$sort) {
+        const sortKey = Object.keys(stage.$sort)[0];
+        const direction = stage.$sort[sortKey];
+        results.sort((a, b) => {
+          if (a[sortKey] < b[sortKey]) return direction === 1 ? -1 : 1;
+          if (a[sortKey] > b[sortKey]) return direction === 1 ? 1 : -1;
+          return 0;
+        });
+      }
+    }
+
+    return results;
   }
 }
 
