@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   Heart,
@@ -37,6 +38,32 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navItems = [
+    { label: 'Home', path: '/' },
+    { label: 'All Products', path: '/shop' },
+    { label: 'Skin Care', path: '/shop?category=skin-care' },
+    { label: 'Hair Care', path: '/shop?category=hair-care' },
+    { label: 'Bath & Body', path: '/shop?category=bath-body' },
+    { label: 'Our Story', path: '/about' },
+    { label: 'Contact', path: '/contact' },
+  ];
+
+  const isLinkActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return (location.pathname + location.search).startsWith(path);
+  };
 
   // Sync cart from server when user logs in
   useEffect(() => {
@@ -107,80 +134,99 @@ export default function Navbar() {
       </div>
 
       {/* Main Header */}
-      <header className="sticky top-0 z-40 bg-cream-light/95 backdrop-blur-md border-b border-cream-dark transition-all duration-300">
+      <header className={`sticky top-0 z-40 bg-cream-light/90 backdrop-blur-md border-b border-[#FAF7F2]/40 transition-all duration-300 ${
+        isScrolled ? 'shadow-premium py-0' : 'py-1'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className={`flex justify-between items-center transition-all duration-300 ${
+            isScrolled ? 'h-16' : 'h-20'
+          }`}>
             {/* Logo */}
             <div className="flex items-center">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="text-primary p-2 md:hidden hover:text-primary-light"
+                className="text-primary p-2 md:hidden hover:text-primary-light focus:outline-none"
               >
                 <Menu size={24} />
               </button>
-              <Link to="/" className="flex items-center space-x-2 ml-2 md:ml-0">
-                <span className="font-serif text-2xl font-bold tracking-tight text-primary flex items-center">
-                  ☘️ BOTANICALS
+              <Link to="/" className="flex items-center space-x-2.5 ml-2 md:ml-0 group">
+                <svg
+                  className="w-7 h-7 text-primary group-hover:text-secondary-dark transition-colors duration-300"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z" className="opacity-[0.08]" fill="currentColor" />
+                  <path d="M12 22V12" />
+                  <path d="M12 12c2.5-2.5 5-2.5 5-5s-2.5-1-5 2.5c0 0 0 0 0 0z" fill="currentColor" className="opacity-90" />
+                  <path d="M12 12c-2.5-2.5-5-2.5-5-5s2.5-1 5 2.5c0 0 0 0 0 0z" fill="currentColor" className="opacity-90" />
+                  <path d="M12 16c2-2 4-2 4-4s-2-.8-4 2c0 0 0 0 0 0z" fill="currentColor" className="opacity-70" />
+                  <path d="M12 16c-2-2-4-2-4-4s2-.8 4 2c0 0 0 0 0 0z" fill="currentColor" className="opacity-70" />
+                </svg>
+                <span className="font-serif text-xl sm:text-2xl font-bold tracking-[0.18em] text-primary group-hover:text-[#14301B] transition-colors duration-300">
+                  VEDA
                 </span>
               </Link>
             </div>
 
             {/* Desktop Navigation Links */}
-            <nav className="hidden md:flex space-x-8 text-sm font-medium tracking-wide uppercase text-primary">
-              <Link to="/" className="hover:text-secondary-dark transition-colors py-2">
-                Home
-              </Link>
-              <Link to="/shop" className="hover:text-secondary-dark transition-colors py-2">
-                All Products
-              </Link>
-              <Link to="/shop?category=skin-care" className="hover:text-secondary-dark transition-colors py-2">
-                Skin Care
-              </Link>
-              <Link to="/shop?category=hair-care" className="hover:text-secondary-dark transition-colors py-2">
-                Hair Care
-              </Link>
-              <Link to="/shop?category=bath-body" className="hover:text-secondary-dark transition-colors py-2">
-                Bath & Body
-              </Link>
-              <Link to="/about" className="hover:text-secondary-dark transition-colors py-2">
-                Our Story
-              </Link>
-              <Link to="/contact" className="hover:text-secondary-dark transition-colors py-2">
-                Contact
-              </Link>
+            <nav className="hidden md:flex space-x-7 text-[11px] font-semibold tracking-[0.2em] uppercase text-primary">
+              {navItems.map((item) => {
+                const active = isLinkActive(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`relative py-2.5 transition-colors duration-300 ${
+                      active ? 'text-secondary-dark' : 'hover:text-secondary-dark'
+                    } group`}
+                  >
+                    {item.label}
+                    {/* Sliding underline */}
+                    <span
+                      className={`absolute bottom-0 left-1/2 -translate-x-1/2 h-[2px] bg-secondary-dark transition-all duration-300 ${
+                        active ? 'w-full' : 'w-0 group-hover:w-full'
+                      }`}
+                    />
+                  </Link>
+                );
+              })}
             </nav>
 
             {/* Icons Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-2">
               {/* Search Toggle */}
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
-                className="text-primary hover:text-secondary-dark p-2 transition-colors"
+                className="text-primary hover:text-secondary-dark hover:scale-110 transition-all duration-300 p-2 flex items-center justify-center focus:outline-none"
                 title="Search"
               >
                 <Search size={20} />
               </button>
 
               {/* Profile Menu */}
-              <div className="relative">
+              <div className="relative flex items-center justify-center">
                 {token ? (
                   <>
                     <button
                       onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                      className="flex items-center space-x-2 focus:outline-none group p-1"
+                      className="flex items-center justify-center focus:outline-none group p-1"
                       title="Account Menu"
                     >
-                      <div className="w-8 h-8 rounded-full bg-[#0F5132] text-white flex items-center justify-center font-bold text-xs uppercase tracking-wider shadow-inner group-hover:bg-[#0c4027] transition-all">
+                      <div className="w-7 h-7 rounded-full bg-[#0F5132] text-white flex items-center justify-center font-bold text-[10px] uppercase tracking-wider shadow-inner group-hover:bg-[#0c4027] transition-all duration-300">
                         {(() => {
                           if (!user?.name) return 'U';
                           const parts = user.name.trim().split(/\s+/);
                           return parts.length > 1 ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase() : parts[0][0].toUpperCase();
                         })()}
                       </div>
-                      <ChevronDown size={13} className="text-primary group-hover:text-secondary-dark transition-colors hidden sm:inline" />
+                      <ChevronDown size={11} className="text-primary group-hover:text-secondary-dark transition-colors hidden sm:inline ml-1" />
                     </button>
                     {profileDropdownOpen && (
-                      <div className="absolute right-0 mt-2.5 w-56 bg-white border border-[#E3ECE6] rounded-md shadow-premium z-50 text-xs overflow-hidden">
+                      <div className="absolute right-0 mt-36 w-56 bg-white border border-[#E3ECE6] rounded-md shadow-premium z-50 text-xs overflow-hidden">
                         <div className="px-4 py-3 bg-[#F4FAF7] border-b border-[#E3ECE6]">
                           <p className="font-bold text-[#1C3F24] line-clamp-1">{user?.name}</p>
                           <p className="text-[10px] text-gray-500 mt-0.5 line-clamp-1">{user?.email}</p>
@@ -228,7 +274,7 @@ export default function Navbar() {
                 ) : (
                   <Link
                     to="/login"
-                    className="text-primary hover:text-secondary-dark p-2 transition-colors"
+                    className="text-primary hover:text-secondary-dark hover:scale-110 transition-all duration-300 p-2 flex items-center justify-center"
                     title="Account"
                   >
                     <UserIcon size={20} />
@@ -239,12 +285,12 @@ export default function Navbar() {
               {/* Wishlist Link */}
               <Link
                 to="/wishlist"
-                className="text-primary hover:text-secondary-dark p-2 transition-colors relative"
+                className="text-primary hover:text-secondary-dark hover:scale-110 transition-all duration-300 p-2 relative flex items-center justify-center"
                 title="Wishlist"
               >
                 <Heart size={20} />
                 {wishlist.length > 0 && (
-                  <span className="absolute top-1 right-1 bg-red-500 text-white rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">
+                  <span className="absolute top-0.5 right-0.5 bg-[#C62828] text-white rounded-full text-[8px] w-3.5 h-3.5 flex items-center justify-center font-bold shadow-sm border border-white animate-pulse">
                     {wishlist.length}
                   </span>
                 )}
@@ -253,12 +299,12 @@ export default function Navbar() {
               {/* Cart Toggle */}
               <button
                 onClick={() => setCartDrawerOpen(true)}
-                className="text-primary hover:text-secondary-dark p-2 transition-colors relative"
+                className="text-primary hover:text-secondary-dark hover:scale-110 transition-all duration-300 p-2 relative flex items-center justify-center focus:outline-none"
                 title="Shopping Bag"
               >
                 <ShoppingBag size={20} />
                 {items.length > 0 && (
-                  <span className="absolute top-1 right-1 bg-primary text-cream rounded-full text-[10px] w-4 h-4 flex items-center justify-center font-bold">
+                  <span className="absolute top-0.5 right-0.5 bg-primary text-cream rounded-full text-[8px] w-3.5 h-3.5 flex items-center justify-center font-bold shadow-sm border border-white animate-pulse">
                     {items.reduce((acc, item) => acc + item.qty, 0)}
                   </span>
                 )}
@@ -296,7 +342,7 @@ export default function Navbar() {
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
           <div className="relative flex flex-col w-4/5 max-w-xs bg-cream-light h-full shadow-premium py-6 px-6 overflow-y-auto z-50">
             <div className="flex justify-between items-center mb-8">
-              <span className="font-serif text-xl font-bold text-primary">☘️ BOTANICALS</span>
+              <span className="font-serif text-xl font-bold text-primary">☘️ VEDA</span>
               <button onClick={() => setMobileMenuOpen(false)} className="text-primary p-2">
                 <X size={24} />
               </button>

@@ -21,18 +21,32 @@ export default function ProductCard({
     return 'Calming | Aromatic | Pure';
   };
 
+  const getProductImage = () => {
+    if (!product.images || !Array.isArray(product.images) || product.images.length === 0 || !product.images[0]) {
+      return 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=600&auto=format&fit=crop';
+    }
+    const firstImage = product.images[0];
+    if (firstImage.startsWith('http://') || firstImage.startsWith('https://')) {
+      if (firstImage.includes('unsplash.com')) {
+        return firstImage.replace(/w=\d+/, 'w=800').replace(/q=\d+/, 'q=85');
+      }
+      return firstImage;
+    }
+    return `http://127.0.0.1:5000/${firstImage.replace(/^\//, '')}`;
+  };
+
   return (
     <div className="bg-white border border-[#EDEDED] rounded-2xl relative flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 group">
 
-      {/* Badges Row */}
-      <div className="absolute top-3 left-3 right-3 z-20 flex justify-between items-start pointer-events-none">
-        {isDiscounted ? (
-          <span className="bg-[#E7F6EE] text-[#0F5132] text-[10px] font-bold px-2 py-0.5 rounded-full">
+      {/* Badges Column */}
+      <div className="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1 items-start pointer-events-none">
+        {isDiscounted && (
+          <span className="bg-[#E7F6EE] text-[#0F5132] text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full">
             Save ₹{discountAmount}
           </span>
-        ) : <span />}
+        )}
         {((product.rating || 0) >= 4.5) && (
-          <span className="bg-[#E2ECE6] text-[#2E4A3F] text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wide">
+          <span className="bg-[#E2ECE6] text-[#2E4A3F] text-[8px] sm:text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wide">
             Best Seller
           </span>
         )}
@@ -41,11 +55,11 @@ export default function ProductCard({
       {/* Wishlist Button */}
       <button
         onClick={(e) => { e.preventDefault(); onToggleWishlist(product._id); }}
-        className="absolute z-20 bottom-[88px] right-3 w-8 h-8 flex items-center justify-center bg-white/90 rounded-full shadow-sm border border-gray-100 hover:scale-110 transition-transform"
+        className="absolute z-20 top-2.5 right-2.5 w-8 h-8 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full shadow-sm border border-gray-100 hover:scale-110 hover:bg-white transition-all"
         aria-label="Toggle wishlist"
       >
         <Heart
-          size={16}
+          size={15}
           strokeWidth={1.8}
           className={isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}
         />
@@ -58,15 +72,13 @@ export default function ProductCard({
         style={{ paddingBottom: '100%' }}
       >
         <img
-          src={
-            (Array.isArray(product.images) && typeof product.images[0] === 'string')
-              ? product.images[0].includes('unsplash.com')
-                ? product.images[0].replace(/w=\d+/, 'w=800').replace(/q=\d+/, 'q=85')
-                : product.images[0]
-              : 'https://placehold.co/400x400?text=No+Image'
-          }
+          src={getProductImage()}
           alt={product.name}
-          className="absolute inset-0 w-full h-full object-contain p-6 group-hover:scale-105 transition-transform duration-500"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=600&auto=format&fit=crop';
+          }}
+          className="absolute inset-0 w-full h-full object-contain p-4 sm:p-6 group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
         {product.stockStatus === 'out_of_stock' && (
@@ -79,16 +91,20 @@ export default function ProductCard({
       </Link>
 
       {/* Info */}
-      <div className="flex flex-col flex-1 p-3 pt-2 gap-1">
+      <div className="flex flex-col flex-1 p-3 pt-2 gap-1.5 min-w-0">
         {/* Name */}
-        <Link to={`/product/${product.slug}`}>
+        <Link to={`/product/${product.slug}`} className="block min-h-[2.5rem]">
           <h3 className="text-[13px] font-semibold text-gray-900 line-clamp-2 leading-snug hover:text-[#0F5132] transition-colors">
             {product.name}
           </h3>
         </Link>
 
         {/* Tagline */}
-        <p className="text-[11px] text-[#0F5132] leading-tight truncate">{getTagline()}</p>
+        <div className="min-h-[2rem] flex items-center">
+          <p className="text-[11px] text-[#0F5132] leading-tight line-clamp-2">
+            {getTagline()}
+          </p>
+        </div>
 
         {/* Stars */}
         <div className="flex items-center gap-1">
@@ -101,23 +117,24 @@ export default function ProductCard({
         <div className="flex-1" />
 
         {/* Price + Add Row */}
-        <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100 mt-1">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="bg-[#F3F9F6] border border-[#0F5132] text-[12px] font-bold text-gray-900 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+        <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-gray-100 mt-auto min-w-0">
+          <div className="flex flex-wrap items-center gap-1 min-w-0">
+            <span className="bg-[#F3F9F6] border border-[#0F5132] text-[12px] font-bold text-gray-900 px-2 py-0.5 rounded-full whitespace-nowrap">
               ₹{activePrice}
             </span>
             {isDiscounted && (
-              <span className="text-[11px] text-gray-400 line-through whitespace-nowrap">₹{product.price}</span>
+              <span className="text-[10px] text-gray-400 line-through whitespace-nowrap">₹{product.price}</span>
             )}
           </div>
 
           <button
             onClick={() => onAddToCart(product._id)}
             disabled={product.stockStatus === 'out_of_stock'}
-            className="shrink-0 bg-[#2D6A4F] hover:bg-[#1B4332] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-[11px] px-3 py-1.5 rounded-full transition-colors flex items-center gap-1 whitespace-nowrap"
+            className="shrink-0 bg-[#2D6A4F] hover:bg-[#1B4332] disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold text-[10px] p-2 min-[400px]:px-2.5 min-[400px]:py-1.5 rounded-full transition-colors flex items-center justify-center gap-1 whitespace-nowrap"
+            title="Add to Cart"
           >
-            <ShoppingBag size={11} />
-            Add
+            <ShoppingBag size={11} className="shrink-0" />
+            <span className="hidden min-[400px]:inline">Add</span>
           </button>
         </div>
       </div>

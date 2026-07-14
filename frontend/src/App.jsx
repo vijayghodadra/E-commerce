@@ -58,7 +58,7 @@ function AdminRoute({ children }) {
 // Storefront layout
 function StorefrontLayout() {
   return (
-    <div className="flex flex-col min-h-screen bg-cream-light font-sans text-primary">
+    <div className="flex flex-col min-h-screen bg-cream-light font-sans text-primary overflow-x-hidden">
       <Navbar />
       <main className="flex-grow">
         <Routes>

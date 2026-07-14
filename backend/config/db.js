@@ -37,6 +37,10 @@ const connectDB = async () => {
       connectionTimeoutMillis: 5000
     });
 
+    pool.on('error', (err) => {
+      console.error('Unexpected error on idle database client:', err.message);
+    });
+
     if (isServerless) {
       console.error('Supabase pool initialized lazily for serverless environment');
       return;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Star, ShieldCheck, Leaf, Sparkles, Heart } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '../hooks/useToast';
 import { cartSuccess } from '../store/slices/cartSlice';
 import { wishlistSuccess } from '../store/slices/wishlistSlice';
@@ -98,6 +99,29 @@ const testimonials = [
   },
 ];
 
+const slideVariants = {
+  enter: {
+    opacity: 0,
+    scale: 0.98
+  },
+  center: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.16, 1, 0.3, 1]
+    }
+  },
+  exit: {
+    opacity: 0,
+    scale: 0.98,
+    transition: {
+      duration: 0.4,
+      ease: [0.16, 1, 0.3, 1]
+    }
+  }
+};
+
 export default function Home() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -106,10 +130,8 @@ export default function Home() {
   const { token } = useSelector((state) => state.auth);
   const wishlist = useSelector((state) => state.wishlist.products);
 
-  const [currentIndex, setCurrentIndex] = useState(1);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
   const [bestSellers, setBestSellers] = useState([]);
   const [newArrivals, setNewArrivals] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -125,13 +147,11 @@ export default function Home() {
   // Auto slide hero banner
   useEffect(() => {
     const timer = setInterval(() => {
-      if (!isTransitioning) {
-        setIsTransitioning(true);
-        setCurrentIndex((prev) => prev + 1);
-      }
-    }, 6000);
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % heroSlides.length);
+    }, 6500);
     return () => clearInterval(timer);
-  }, [currentIndex, isTransitioning]);
+  }, [currentIndex]);
 
   // Accent color map per slug (for styling, image comes from DB)
   const accentMap = {
@@ -222,165 +242,166 @@ export default function Home() {
   };
 
   const nextSlide = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev + 1);
+    setDirection(1);
+    setCurrentIndex((prev) => (prev + 1) % heroSlides.length);
   };
   const prevSlide = () => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex((prev) => prev - 1);
-  };
-  const handleTransitionEnd = () => {
-    setIsTransitioning(false);
-    if (currentIndex === paddedSlides.length - 1) {
-      setCurrentIndex(1);
-    } else if (currentIndex === 0) {
-      setCurrentIndex(paddedSlides.length - 2);
-    }
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
   const handleDotClick = (idx) => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    setCurrentIndex(idx + 1);
+    setDirection(idx > currentIndex ? 1 : -1);
+    setCurrentIndex(idx);
   };
 
-  const minSwipeDistance = 50;
-  const onTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
+  const categoryFallbackImages = {
+    'skin-care':          'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600&auto=format&fit=crop',
+    'hair-care':          'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a3ef?q=80&w=600&auto=format&fit=crop',
+    'bath-body':          'https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=600&auto=format&fit=crop',
+    'fragrance-wellness': 'https://images.unsplash.com/photo-1602930044438-4b2a362a9870?q=80&w=600&auto=format&fit=crop',
   };
-  const onTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-  const onTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    if (isLeftSwipe) {
-      nextSlide();
-    } else if (isRightSwipe) {
-      prevSlide();
+
+  const getCategoryImage = (cat) => {
+    if (!cat.image) return categoryFallbackImages[cat.slug] || 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600';
+    if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) {
+      return cat.image;
     }
+    return `http://127.0.0.1:5000/${cat.image.replace(/^\//, '')}`;
   };
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Banner Section */}
-      <section className="relative overflow-hidden w-full py-4 sm:py-6 bg-[#fdfbf9]">
-        <div 
-          className={`flex ${isTransitioning ? 'transition-transform duration-200 ease-in-out' : ''} sm:px-[10%]`}
-          style={{
-            transform: isMobile
-              ? `translateX(-${currentIndex * 100}vw)`
-              : `translateX(calc(-${currentIndex * 80}vw + 10vw))`
-          }}
-          onTransitionEnd={handleTransitionEnd}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          {paddedSlides.map((slide, idx) => (
-            <div
-              key={idx}
-              className={`w-full sm:w-[80vw] flex-shrink-0 px-2 sm:px-4 transition-all duration-200 ${
-                idx === currentIndex ? 'scale-100 opacity-100' : 'scale-[0.97] opacity-50'
-              }`}
+      <section className="relative overflow-hidden w-full py-4 sm:py-6 bg-[#fdfbf9] min-h-[340px] sm:min-h-[440px] md:min-h-[540px]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative h-[300px] sm:h-[380px] md:h-[480px]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="absolute inset-y-0 left-4 right-4 sm:left-6 sm:right-6 lg:left-8 lg:right-8 h-full rounded-2xl sm:rounded-3xl overflow-hidden border border-[#F0E6DD]/60 flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 md:p-12"
+              style={{
+                backgroundColor: heroSlides[currentIndex].bgColor,
+                background: `radial-gradient(circle at 75% 20%, rgba(255,255,255,0.45) 0%, transparent 65%), radial-gradient(circle at 10% 80%, rgba(255,255,255,0.2) 0%, transparent 50%), ${heroSlides[currentIndex].bgColor}`,
+                boxShadow: '0 20px 40px -15px rgba(28, 63, 36, 0.05)'
+              }}
             >
-              <div 
-                style={{ backgroundColor: slide.bgColor }}
-                className="rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm border border-[#F0E6DD] flex flex-col md:flex-row items-center justify-between h-[300px] sm:h-[380px] md:h-[480px] p-5 sm:p-10 md:p-12 relative"
-              >
-                {/* Left Content */}
-                <div className="flex-1 space-y-2 sm:space-y-5 text-left z-10 max-w-lg">
-                  <span className="text-[#8B5E3C] font-black tracking-widest text-[10px] sm:text-xs uppercase block">
-                    {slide.subtitle}
+              {/* Floating background details for decoration */}
+              <div className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay">
+                <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+                  <pattern id="leaf-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <path d="M20 5c0 8.3-6.7 15-15 15s-15-6.7-15-15S-3.3-10 5-10s15 6.7 15 15z" fill="currentColor" />
+                  </pattern>
+                  <rect width="100%" height="100%" fill="url(#leaf-pattern)" />
+                </svg>
+              </div>
+
+              {/* Mobile background overlay */}
+              <div className="absolute inset-0 block md:hidden opacity-[0.08] pointer-events-none">
+                <img
+                  src={heroSlides[currentIndex].image}
+                  alt=""
+                  className="w-full h-full object-cover filter blur-[1px]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+              </div>
+
+              {/* Left Content */}
+              <div className="flex-1 space-y-3.5 sm:space-y-6 text-left z-10 max-w-lg">
+                <div className="inline-flex items-center gap-1.5">
+                  <span className="text-[#C89B7B] text-xs font-serif">✦</span>
+                  <span className="text-[#8B5E3C] font-extrabold tracking-[0.25em] text-[10px] sm:text-xs uppercase block">
+                    {heroSlides[currentIndex].subtitle}
                   </span>
-                  <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold font-serif text-[#4A2E2B] leading-tight">
-                    {slide.title}
-                  </h1>
-                  
-                  {/* Discount Badge */}
-                  <div className="inline-flex flex-wrap items-center gap-2 sm:gap-4 my-1">
-                    <span className="bg-[#4A2E2B] text-cream text-base sm:text-2xl font-black px-3 py-1 rounded-md leading-none shadow-sm uppercase">
-                      {slide.discount}
+                </div>
+                <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-extrabold text-[#2E1E1C] leading-tight drop-shadow-sm">
+                  {heroSlides[currentIndex].title}
+                </h1>
+                
+                {/* Discount Badge */}
+                <div className="inline-flex flex-wrap items-center gap-2 sm:gap-4 my-1.5">
+                  <span className="bg-gradient-to-r from-[#4A2E2B] to-[#5C3A36] text-[#FAF7F2] text-xs sm:text-sm font-black px-4 py-1.5 rounded-full tracking-wider shadow-sm uppercase">
+                    {heroSlides[currentIndex].discount}
+                  </span>
+                  {heroSlides[currentIndex].promoCode && (
+                    <span className="border border-dashed border-[#8B5E3C]/85 text-[#8B5E3C] text-[10px] sm:text-xs font-bold px-3 py-1 bg-white/40 rounded-full">
+                      USE CODE: <span className="font-extrabold text-[#4A2E2B]">{heroSlides[currentIndex].promoCode}</span>
                     </span>
-                    {slide.promoCode && (
-                      <span className="border-2 border-dashed border-[#8B5E3C] text-[#8B5E3C] text-[10px] sm:text-xs font-bold px-2.5 py-1 bg-white/40 rounded-sm">
-                        USE CODE: <span className="font-extrabold text-[#4A2E2B]">{slide.promoCode}</span>
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="text-xs sm:text-sm text-[#5C4033] font-medium leading-relaxed max-w-md hidden sm:block">
-                    {slide.description}
-                  </p>
-
-                  <div className="pt-1 sm:pt-3">
-                    <Link to={slide.link} className="bg-[#4A2E2B] hover:bg-[#2E1E1C] text-cream px-5 py-2.5 font-semibold text-xs rounded-full uppercase tracking-wider transition-colors inline-flex items-center gap-2">
-                      <span>Explore Now</span>
-                      <ArrowRight size={13} />
-                    </Link>
-                  </div>
+                  )}
                 </div>
 
-                {/* Right Image */}
-                <div className="absolute right-0 top-0 bottom-0 w-1/2 hidden md:block">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-white/10 z-10"></div>
-                  <div 
-                    className="absolute left-0 top-0 bottom-0 w-32 z-10"
-                    style={{
-                      background: `linear-gradient(to right, ${slide.bgColor}, transparent)`
-                    }}
-                  ></div>
-                  <img
-                    src={slide.image}
-                    alt={slide.title}
-                    className="w-full h-full object-cover"
-                  />
+                <p className="text-xs sm:text-sm text-[#5C4033]/90 font-medium leading-relaxed max-w-md hidden sm:block">
+                  {heroSlides[currentIndex].description}
+                </p>
+
+                <div className="pt-2 sm:pt-4">
+                  <Link
+                    to={heroSlides[currentIndex].link}
+                    className="bg-[#2E1E1C] hover:bg-[#4E3430] hover:shadow-lg hover:scale-102 transition-all duration-300 text-[#FAF7F2] px-6 py-3 font-bold text-xs rounded-full uppercase tracking-wider inline-flex items-center gap-2 group"
+                  >
+                    <span>Explore Now</span>
+                    <ArrowRight size={13} className="transform group-hover:translate-x-1.5 transition-transform duration-300" />
+                  </Link>
                 </div>
               </div>
-            </div>
-          ))}
+
+              {/* Right Image */}
+              <div className="absolute right-0 top-0 bottom-0 w-[45%] hidden md:block overflow-hidden rounded-r-3xl">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#FAF7F2]/10 z-10"></div>
+                <div 
+                  className="absolute left-0 top-0 bottom-0 w-24 z-10"
+                  style={{
+                    background: `linear-gradient(to right, ${heroSlides[currentIndex].bgColor}, transparent)`
+                  }}
+                ></div>
+                <motion.img
+                  key={heroSlides[currentIndex].image}
+                  initial={{ scale: 1.08, opacity: 0.8 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.9, ease: 'easeOut' }}
+                  src={heroSlides[currentIndex].image}
+                  alt={heroSlides[currentIndex].title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Chevron Navigation */}
+          <button
+            onClick={prevSlide}
+            className="hidden md:flex absolute left-12 sm:left-16 top-1/2 -translate-y-1/2 z-20 bg-white/85 hover:bg-white text-[#2E1E1C] hover:text-[#C5A880] border border-[#FAF7F2] p-3 rounded-full shadow-premium hover:scale-110 transition-all duration-300 focus:outline-none items-center justify-center"
+            aria-label="Previous slide"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={nextSlide}
+            className="hidden md:flex absolute right-12 sm:right-16 top-1/2 -translate-y-1/2 z-20 bg-white/85 hover:bg-white text-[#2E1E1C] hover:text-[#C5A880] border border-[#FAF7F2] p-3 rounded-full shadow-premium hover:scale-110 transition-all duration-300 focus:outline-none items-center justify-center"
+            aria-label="Next slide"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
 
-        {/* Chevron Navigation */}
-        <button
-          onClick={prevSlide}
-          className="absolute left-4 sm:left-12 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-primary border border-cream-dark p-2 sm:p-3 rounded-full shadow-md hover:scale-105 transition-all"
-        >
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-        <button
-          onClick={nextSlide}
-          className="absolute right-4 sm:right-12 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white text-primary border border-cream-dark p-2 sm:p-3 rounded-full shadow-md hover:scale-105 transition-all"
-        >
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
-
         {/* Slide Indicators */}
-        <div className="flex justify-center space-x-2 mt-6">
-          {heroSlides.map((_, idx) => {
-            const activeDot = currentIndex === 0 
-              ? heroSlides.length - 1 
-              : currentIndex === paddedSlides.length - 1 
-                ? 0 
-                : currentIndex - 1;
-            return (
-              <button
-                key={idx}
-                onClick={() => handleDotClick(idx)}
-                className={`h-[3px] rounded-full transition-all duration-300 ${
-                  idx === activeDot ? 'bg-[#0F5132] w-8' : 'bg-[#E5DCD3] hover:bg-[#8B5E3C] w-4'
-                }`}
-              />
-            );
-          })}
+        <div className="flex justify-center space-x-2.5 mt-6">
+          {heroSlides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleDotClick(idx)}
+              className={`h-[4px] rounded-full transition-all duration-300 focus:outline-none ${
+                idx === currentIndex ? 'bg-[#0F5132] w-7' : 'bg-[#E5DCD3] hover:bg-[#8B5E3C] w-3.5'
+              }`}
+              aria-label={`Go to slide ${idx + 1}`}
+            />
+          ))}
         </div>
       </section>
 
@@ -438,56 +459,58 @@ export default function Home() {
               <Link
                 key={cat._id || idx}
                 to={`/shop?category=${cat.slug}`}
-                className="group relative block overflow-hidden rounded-xl sm:rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500"
-                style={{ height: 'clamp(220px, 40vw, 420px)' }}
+                className="group relative block overflow-hidden rounded-2xl border border-[#FAF7F2] shadow-premium hover:shadow-premium-hover transition-all duration-700 bg-white"
+                style={{ height: 'clamp(220px, 40vw, 440px)' }}
               >
-                {/* Image */}
-                <img
-                  src={cat.image}
-                  alt={cat.name}
-                  className="absolute inset-0 w-full h-full object-cover scale-100 group-hover:scale-110 transition-transform duration-700 ease-out"
-                />
+                {/* Thin inside frame for art-gallery editorial feel */}
+                <div className="absolute inset-2 sm:inset-3 border border-white/10 z-20 pointer-events-none group-hover:border-[#C8A882]/30 transition-all duration-500 rounded-lg"></div>
 
-                {/* Dark gradient overlay — always visible at bottom */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent z-10"></div>
-
-                {/* Colour accent tint on hover */}
-                <div
-                  className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 z-10"
-                  style={{ backgroundColor: accent }}
-                ></div>
-
-                {/* Top badge */}
-                <div className="absolute top-4 left-4 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                {/* Top dynamic label badge */}
+                <div className="absolute top-3 left-3 sm:top-5 sm:left-5 z-20">
                   <span
-                    className="text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-1 rounded-full text-white"
-                    style={{ backgroundColor: accent + 'CC' }}
+                    className="text-[8px] sm:text-[9px] font-bold tracking-[0.2em] uppercase px-2 py-0.5 sm:px-3 sm:py-1 rounded-full text-white backdrop-blur-md border border-white/20 transition-all duration-500"
+                    style={{ backgroundColor: accent + 'AA' }}
                   >
                     {label}
                   </span>
                 </div>
 
-                {/* Bottom content */}
-                <div className="absolute bottom-0 left-0 right-0 z-20 p-5">
-                  {/* Category name */}
-                  <h3 className="font-serif text-white text-xl font-bold leading-tight mb-1 drop-shadow-lg">
-                    {cat.name}
-                  </h3>
+                {/* Category Image */}
+                <img
+                  src={getCategoryImage(cat)}
+                  alt={cat.name}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = categoryFallbackImages[cat.slug] || 'https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?q=80&w=600';
+                  }}
+                  className="absolute inset-0 w-full h-full object-cover scale-100 group-hover:scale-105 transition-transform duration-1000 ease-out"
+                />
 
-                  {/* Divider line that expands on hover */}
-                  <div
-                    className="h-[1.5px] w-8 group-hover:w-full transition-all duration-500 ease-out mb-3 rounded-full"
-                    style={{ backgroundColor: accent }}
-                  ></div>
+                {/* Dark atmospheric overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/5 z-10 transition-opacity duration-500 group-hover:opacity-90"></div>
 
-                  {/* CTA — slides in on hover */}
-                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 translate-y-3 group-hover:translate-y-0 transition-all duration-400 ease-out">
-                    <span className="text-white text-xs font-semibold tracking-widest uppercase">
-                      Explore Collection
-                    </span>
-                    <svg className="w-3.5 h-3.5 text-white group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
+                {/* Elegant glow panel that matches theme color on hover */}
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700 z-10"
+                  style={{ backgroundColor: accent }}
+                ></div>
+
+                {/* Glassmorphism Editorial Card at bottom */}
+                <div className="absolute bottom-3 left-3 right-3 sm:bottom-5 sm:left-5 sm:right-5 z-20 bg-white/[0.07] backdrop-blur-md border border-white/10 p-2.5 sm:p-4 rounded-xl group-hover:bg-white/[0.13] group-hover:border-white/20 transition-all duration-500 shadow-lg">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-2">
+                    <div className="text-center sm:text-left">
+                      <span className="hidden sm:block text-[9px] font-bold tracking-[0.25em] text-[#C8A882] mb-1">
+                        0{idx + 1} / {cat.slug?.replace('-', ' ').toUpperCase()}
+                      </span>
+                      <h3 className="font-serif text-white text-[13px] sm:text-lg font-bold leading-tight drop-shadow-sm group-hover:text-[#FAF7F2] transition-colors">
+                        {cat.name}
+                      </h3>
+                    </div>
+                    <div className="hidden sm:flex w-8 h-8 rounded-full bg-white/10 border border-white/10 items-center justify-center text-white group-hover:bg-[#C8A882] group-hover:text-black group-hover:border-[#C8A882] transition-all duration-500 shadow-md shrink-0">
+                      <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </Link>
