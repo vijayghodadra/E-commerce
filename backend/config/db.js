@@ -13,6 +13,15 @@ const connectDB = async () => {
     const isServerless = !!process.env.VERCEL;
     connectDB.connectionError = null;
 
+    console.log('Diagnostics:', {
+      VERCEL: process.env.VERCEL,
+      NODE_ENV: process.env.NODE_ENV,
+      isServerless,
+      connType: typeof process.env.SUPABASE_CONNECTION_STRING,
+      connLength: process.env.SUPABASE_CONNECTION_STRING ? process.env.SUPABASE_CONNECTION_STRING.length : 0,
+      connMasked: process.env.SUPABASE_CONNECTION_STRING ? process.env.SUPABASE_CONNECTION_STRING.substring(0, 15) + '...' : 'undefined'
+    });
+
     if (!process.env.SUPABASE_CONNECTION_STRING) {
       const errorMsg = 'SUPABASE_CONNECTION_STRING environment variable is missing';
       console.error(errorMsg);
