@@ -25,7 +25,7 @@ const heroSlides = [
     discount: 'FLAT 15% OFF',
     promoCode: 'GLOW15',
     description: 'Slow-brewed with 21 rare herbs for a radiant, golden complexion. Free face wash on orders over ₹800.',
-    image: 'https://images.unsplash.com/photo-1608248597481-496100c8c836?q=80&w=1200&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1612817288484-6f916006741a?q=80&w=1200&auto=format&fit=crop',
     link: '/shop?category=skin-care',
     bgColor: '#F6ECE2',
   },
@@ -45,7 +45,7 @@ const heroSlides = [
     discount: 'FLAT 20% OFF',
     promoCode: 'NEEM20',
     description: 'Formulated with organic neem leaves and steam-distilled tea tree oil to clean pores and prevent breakouts.',
-    image: 'https://images.unsplash.com/photo-1556228578-0d85b1a4a5afd?q=80&w=1200&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?q=80&w=1200&auto=format&fit=crop',
     link: '/shop?category=skin-care',
     bgColor: '#E6EFEA',
   },
@@ -65,7 +65,7 @@ const heroSlides = [
     discount: 'UPTO 50% OFF',
     promoCode: 'UBTAN50',
     description: 'Slow-ground sandalwood powder, saffron threads, and turmeric root to naturally revive skin complexion.',
-    image: 'https://images.unsplash.com/photo-1607006342411-1a90d7dcdeae?q=80&w=1200&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1608571423902-eed4a5ad8108?q=80&w=1200&auto=format&fit=crop',
     link: '/shop?category=skin-care',
     bgColor: '#F9F4E5',
   },
@@ -114,6 +114,13 @@ export default function Home() {
   const [newArrivals, setNewArrivals] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Auto slide hero banner
   useEffect(() => {
@@ -258,7 +265,11 @@ export default function Home() {
       <section className="relative overflow-hidden w-full py-4 sm:py-6 bg-[#fdfbf9]">
         <div 
           className={`flex ${isTransitioning ? 'transition-transform duration-200 ease-in-out' : ''} sm:px-[10%]`}
-          style={{ transform: `translateX(-${currentIndex * 100}vw)` }}
+          style={{
+            transform: isMobile
+              ? `translateX(-${currentIndex * 100}vw)`
+              : `translateX(calc(-${currentIndex * 80}vw + 10vw))`
+          }}
           onTransitionEnd={handleTransitionEnd}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
