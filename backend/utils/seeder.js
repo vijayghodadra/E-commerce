@@ -327,6 +327,19 @@ const couponsData = [
 ];
 
 const seedDB = async () => {
+  // Safeguards to prevent accidental database wiping
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL === 'true' || process.env.VERCEL) {
+    console.error('\x1b[31m%s\x1b[0m', 'CRITICAL ERROR: Seeding is disabled in Production or Vercel environments to prevent permanent data loss!');
+    process.exit(1);
+  }
+
+  if (!process.argv.includes('--force')) {
+    console.warn('\x1b[33m%s\x1b[0m', 'WARNING: Running this seeder will CLEAR your database (all products, categories, users, and coupons will be DELETED).');
+    console.warn('If you are absolutely sure, run the command with the --force flag:');
+    console.warn('\x1b[32m%s\x1b[0m', '  npm run seed -- --force');
+    process.exit(0);
+  }
+
   try {
     await connectDB();
 
