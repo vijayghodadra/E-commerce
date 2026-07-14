@@ -111,10 +111,10 @@ export default function Wishlist() {
 
                   <div className="p-4">
                     {/* Rating */}
-                    {prod.rating > 0 && (
+                    {(prod.rating || 0) > 0 && (
                       <div className="flex items-center space-x-1 mb-1">
                         <Star size={10} className="text-secondary fill-secondary" />
-                        <span className="text-[10px] font-bold text-primary">{prod.rating.toFixed(1)}</span>
+                        <span className="text-[10px] font-bold text-primary">{(prod.rating || 0).toFixed(1)}</span>
                       </div>
                     )}
                     <Link to={`/product/${prod.slug}`}>

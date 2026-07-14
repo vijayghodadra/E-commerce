@@ -31,7 +31,7 @@ export default function ProductCard({
             Save ₹{discountAmount}
           </span>
         ) : <span />}
-        {product.rating >= 4.5 && (
+        {((product.rating || 0) >= 4.5) && (
           <span className="bg-[#E2ECE6] text-[#2E4A3F] text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wide">
             Best Seller
           </span>
@@ -93,8 +93,8 @@ export default function ProductCard({
         {/* Stars */}
         <div className="flex items-center gap-1">
           <Star size={11} className="fill-[#F5A623] text-[#F5A623] shrink-0" />
-          <span className="text-[11px] font-bold text-gray-800">{product.rating.toFixed(1)}</span>
-          <span className="text-[11px] text-gray-400">({product.numReviews})</span>
+          <span className="text-[11px] font-bold text-gray-800">{(product.rating || 0).toFixed(1)}</span>
+          <span className="text-[11px] text-gray-400">({product.numReviews || 0})</span>
         </div>
 
         {/* Spacer */}

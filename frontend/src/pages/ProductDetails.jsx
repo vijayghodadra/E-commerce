@@ -264,12 +264,12 @@ export default function ProductDetails() {
                   <Star
                     key={i}
                     size={14}
-                    className={i < Math.floor(product.rating) ? 'fill-[#F5A623] text-[#F5A623]' : 'text-gray-200'}
+                    className={i < Math.floor(product.rating || 0) ? 'fill-[#F5A623] text-[#F5A623]' : 'text-gray-200'}
                   />
                 ))}
               </div>
-              <span className="text-xs font-bold text-gray-800">{product.rating.toFixed(1)}</span>
-              <span className="text-xs text-gray-500 font-medium">({product.numReviews} customer reviews)</span>
+              <span className="text-xs font-bold text-gray-800">{(product.rating || 0).toFixed(1)}</span>
+              <span className="text-xs text-gray-500 font-medium">({product.numReviews || 0} customer reviews)</span>
             </div>
           </div>
 
