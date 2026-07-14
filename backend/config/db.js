@@ -13,7 +13,7 @@ const connectDB = async () => {
     const isServerless = !!process.env.VERCEL;
     connectDB.connectionError = null;
 
-    console.log('Diagnostics:', {
+    console.error('Diagnostics:', {
       VERCEL: process.env.VERCEL,
       NODE_ENV: process.env.NODE_ENV,
       isServerless,
@@ -26,9 +26,6 @@ const connectDB = async () => {
       const errorMsg = 'SUPABASE_CONNECTION_STRING environment variable is missing';
       console.error(errorMsg);
       connectDB.connectionError = errorMsg;
-      if (!isServerless) {
-        process.exit(1);
-      }
       return;
     }
 
@@ -41,21 +38,18 @@ const connectDB = async () => {
     });
 
     if (isServerless) {
-      console.log('Supabase pool initialized lazily for serverless environment');
+      console.error('Supabase pool initialized lazily for serverless environment');
       return;
     }
 
     const client = await pool.connect();
-    console.log('Supabase PostgreSQL Connected successfully');
+    console.error('Supabase PostgreSQL Connected successfully');
     client.release();
 
     await initializeTables();
   } catch (error) {
     console.error(`PostgreSQL Connection Error: ${error.message}`);
     connectDB.connectionError = error.message;
-    if (!process.env.VERCEL) {
-      process.exit(1);
-    }
   }
 };
 
