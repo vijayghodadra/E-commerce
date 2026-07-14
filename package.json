@@ -2,6 +2,9 @@
   "name": "ecommerce-mern",
   "version": "1.0.0",
   "description": "Full-stack MERN e-commerce application",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "build": "npm i --prefix frontend && npm run build --prefix frontend",
     "install-all": "npm i && npm i --prefix backend && npm i --prefix frontend",
