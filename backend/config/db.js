@@ -11,6 +11,18 @@ function generateObjectId() {
 const connectDB = async () => {
   try {
     const isServerless = !!process.env.VERCEL;
+    connectDB.connectionError = null;
+
+    if (!process.env.SUPABASE_CONNECTION_STRING) {
+      const errorMsg = 'SUPABASE_CONNECTION_STRING environment variable is missing';
+      console.error(errorMsg);
+      connectDB.connectionError = errorMsg;
+      if (!isServerless) {
+        process.exit(1);
+      }
+      return;
+    }
+
     pool = new Pool({
       connectionString: process.env.SUPABASE_CONNECTION_STRING,
       ssl: { rejectUnauthorized: false },
@@ -26,10 +38,10 @@ const connectDB = async () => {
     await initializeTables();
   } catch (error) {
     console.error(`PostgreSQL Connection Error: ${error.message}`);
+    connectDB.connectionError = error.message;
     if (!process.env.VERCEL) {
       process.exit(1);
     }
-    throw error;
   }
 };
 

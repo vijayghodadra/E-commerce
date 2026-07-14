@@ -59,6 +59,17 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.get('/api/health', async (req, res) => {
   try {
     const connectDB = require('./config/db');
+    if (connectDB.connectionError) {
+      return res.status(500).json({
+        success: false,
+        status: 'Database connection failed (on boot)',
+        error: connectDB.connectionError,
+        envExists: {
+          SUPABASE_CONNECTION_STRING: !!process.env.SUPABASE_CONNECTION_STRING,
+          MONGO_URI: !!process.env.MONGO_URI
+        }
+      });
+    }
     const pool = connectDB.getPool ? connectDB.getPool() : null;
     if (!pool) {
       return res.status(500).json({
