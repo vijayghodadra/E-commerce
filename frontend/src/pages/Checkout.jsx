@@ -605,7 +605,13 @@ export default function Checkout() {
                   disabled={placingOrder}
                   className="btn-primary text-xs flex items-center justify-center space-x-2 min-w-44"
                 >
-                  <span>{placingOrder ? 'Processing...' : `Pay Rs. ${totals.total}`}</span>
+                  <span>
+                    {placingOrder
+                      ? 'Processing...'
+                      : paymentMethod === 'cod'
+                      ? 'Confirm Order'
+                      : `Pay Rs. ${totals.total}`}
+                  </span>
                 </button>
               </div>
             </div>
