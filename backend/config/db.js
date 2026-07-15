@@ -86,6 +86,11 @@ const initializeTables = async () => {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_user ON orders ((data->>'user'));`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_addresses_user ON addresses ((data->>'user'));`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users ((data->>'email'));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_category ON products ((data->>'category'));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_is_active ON products (((data->>'isActive')::boolean));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_created_at ON products (created_at DESC);`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_price ON products (((data->>'price')::numeric));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_rating ON products (((data->>'rating')::numeric));`);
 
   console.log('Database tables and indexes initialized successfully');
 };
@@ -190,19 +195,17 @@ class DocumentInstance {
     delete dataToSave.createdAt;
     delete dataToSave.updatedAt;
 
-    const { rows } = await pool.query(`SELECT 1 FROM ${this._tableName} WHERE _id = $1`, [this._id]);
-    
-    if (rows.length > 0) {
-      this.updatedAt = new Date();
-      await pool.query(
-        `UPDATE ${this._tableName} SET data = $1, updated_at = NOW() WHERE _id = $2`,
-        [JSON.stringify(dataToSave), this._id]
-      );
-    } else {
-      await pool.query(
-        `INSERT INTO ${this._tableName} (_id, data, created_at, updated_at) VALUES ($1, $2, NOW(), NOW())`,
-        [this._id, JSON.stringify(dataToSave)]
-      );
+    const { rows } = await pool.query(
+      `INSERT INTO ${this._tableName} (_id, data, created_at, updated_at)
+       VALUES ($1, $2, NOW(), NOW())
+       ON CONFLICT (_id)
+       DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
+       RETURNING created_at, updated_at`,
+      [this._id, JSON.stringify(dataToSave)]
+    );
+    if (rows && rows.length > 0) {
+      this.createdAt = rows[0].created_at;
+      this.updatedAt = rows[0].updated_at;
     }
     return this;
   }
@@ -346,6 +349,8 @@ class QueryChain {
         const dir = direction === 1 || direction === 'asc' || direction === 'ascending' ? 'ASC' : 'DESC';
         if (key === 'createdAt') {
           sortParts.push(`created_at ${dir}`);
+        } else if (key === 'updatedAt') {
+          sortParts.push(`updated_at ${dir}`);
         } else if (key === 'price' || key === 'rating') {
           sortParts.push(`(data->>'${key}')::numeric ${dir}`);
         } else {
