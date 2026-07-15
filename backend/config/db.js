@@ -130,17 +130,26 @@ const TABLE_DEFAULTS = {
 };
 
 function applyUpdate(doc, update) {
-  let setObj = update;
-  if (update.$set) {
-    setObj = update.$set;
-  }
-  
   const cleanDoc = { ...doc };
   delete cleanDoc._tableName;
   
-  for (const [k, v] of Object.entries(setObj)) {
-    cleanDoc[k] = v;
+  if (update.$set) {
+    for (const [k, v] of Object.entries(update.$set)) {
+      cleanDoc[k] = v;
+    }
   }
+  if (update.$inc) {
+    for (const [k, v] of Object.entries(update.$inc)) {
+      cleanDoc[k] = (Number(cleanDoc[k]) || 0) + Number(v);
+    }
+  }
+  
+  if (!update.$set && !update.$inc) {
+    for (const [k, v] of Object.entries(update)) {
+      cleanDoc[k] = v;
+    }
+  }
+  
   return cleanDoc;
 }
 
@@ -445,6 +454,31 @@ class SupabaseModel {
   constructor(tableName, modelClass) {
     this.tableName = tableName;
     this.modelClass = modelClass;
+    
+    const self = this;
+    function Model(data) {
+      return new modelClass(tableName, data || {});
+    }
+
+    return new Proxy(Model, {
+      construct(target, argArray) {
+        return new self.modelClass(self.tableName, argArray[0] || {});
+      },
+      get(target, prop, receiver) {
+        if (prop in target) {
+          return target[prop];
+        }
+        const val = self[prop];
+        if (typeof val === 'function') {
+          return val.bind(self);
+        }
+        return val;
+      },
+      set(target, prop, value, receiver) {
+        self[prop] = value;
+        return true;
+      }
+    });
   }
 
   compileQuery(query) {
