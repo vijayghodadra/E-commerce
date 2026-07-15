@@ -489,8 +489,6 @@ class QueryChain {
         }
       }
     }
-      }
-    }
 
     if (this.single) {
       return docs.length > 0 ? docs[0] : null;
