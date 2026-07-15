@@ -58,13 +58,12 @@ const addToCart = async (req, res) => {
 
     await cart.save();
     
-    // Populate before sending back
-    await cart.populate({
+    const populatedCart = await Cart.findOne({ _id: cart._id }).populate({
       path: 'items.product',
       select: 'name slug price discountPrice images stockStatus inventoryCount sku',
     });
 
-    res.json({ success: true, cart });
+    res.json({ success: true, cart: populatedCart });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -94,12 +93,12 @@ const updateCartQuantity = async (req, res) => {
       }
       await cart.save();
       
-      await cart.populate({
+      const populatedCart = await Cart.findOne({ _id: cart._id }).populate({
         path: 'items.product',
         select: 'name slug price discountPrice images stockStatus inventoryCount sku',
       });
 
-      res.json({ success: true, cart });
+      res.json({ success: true, cart: populatedCart });
     } else {
       res.status(404).json({ success: false, message: 'Product not found in cart' });
     }
@@ -124,12 +123,12 @@ const removeFromCart = async (req, res) => {
 
     await cart.save();
     
-    await cart.populate({
+    const populatedCart = await Cart.findOne({ _id: cart._id }).populate({
       path: 'items.product',
       select: 'name slug price discountPrice images stockStatus inventoryCount sku',
     });
 
-    res.json({ success: true, cart });
+    res.json({ success: true, cart: populatedCart });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -182,14 +181,14 @@ const toggleWishlist = async (req, res) => {
 
     await wishlist.save();
     
-    await wishlist.populate({
+    const populatedWishlist = await Wishlist.findOne({ _id: wishlist._id }).populate({
       path: 'products',
       select: 'name slug price discountPrice images stockStatus rating',
     });
 
     res.json({
       success: true,
-      wishlist,
+      wishlist: populatedWishlist,
       isAdded: !isAdded,
     });
   } catch (error) {

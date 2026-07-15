@@ -189,6 +189,77 @@ class DocumentInstance {
     }
     return this;
   }
+
+  async populate(field, selectFields) {
+    let path = field;
+    let select = selectFields;
+    if (typeof field === 'object' && field !== null) {
+      path = field.path;
+      select = field.select || selectFields;
+    }
+
+    let paths = typeof path === 'string' ? [path] : path;
+
+    for (const p of paths) {
+      if (p === 'items.product') {
+        if (Array.isArray(this.items)) {
+          for (const item of this.items) {
+            if (item.product) {
+              const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
+              const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [idVal]);
+              if (refRows.length > 0) {
+                item.product = { _id: refRows[0]._id, ...refRows[0].data };
+              }
+            }
+          }
+        }
+        continue;
+      }
+
+      if (p === 'orderItems.product') {
+        if (Array.isArray(this.orderItems)) {
+          for (const item of this.orderItems) {
+            if (item.product) {
+              const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
+              const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [idVal]);
+              if (refRows.length > 0) {
+                item.product = { _id: refRows[0]._id, ...refRows[0].data };
+              }
+            }
+          }
+        }
+        continue;
+      }
+
+      const refId = this[p];
+      if (refId) {
+        let refTable;
+        if (p === 'category') refTable = 'categories';
+        else if (p === 'user') refTable = 'users';
+        else if (p === 'products') refTable = 'products';
+        else refTable = `${p}s`;
+
+        if (Array.isArray(refId)) {
+          const populatedList = [];
+          for (const singleId of refId) {
+            const idVal = typeof singleId === 'object' && singleId._id ? singleId._id : singleId;
+            const { rows: refRows } = await pool.query(`SELECT * FROM ${refTable} WHERE _id = $1`, [idVal]);
+            if (refRows.length > 0) {
+              populatedList.push({ _id: refRows[0]._id, ...refRows[0].data });
+            }
+          }
+          this[p] = populatedList;
+        } else {
+          const idVal = typeof refId === 'object' && refId._id ? refId._id : refId;
+          const { rows: refRows } = await pool.query(`SELECT * FROM ${refTable} WHERE _id = $1`, [idVal]);
+          if (refRows.length > 0) {
+            this[p] = { _id: refRows[0]._id, ...refRows[0].data };
+          }
+        }
+      }
+    }
+    return this;
+  }
 }
 
 class QueryChain {
@@ -220,7 +291,14 @@ class QueryChain {
   }
 
   populate(field, selectFields) {
-    this.populateOptions.push({ field, selectFields });
+    if (typeof field === 'object' && field !== null) {
+      this.populateOptions.push({
+        field: field.path,
+        selectFields: field.select || selectFields
+      });
+    } else {
+      this.populateOptions.push({ field, selectFields });
+    }
     return this;
   }
 
@@ -296,11 +374,27 @@ class QueryChain {
       }
       for (const field of fields) {
         for (const doc of docs) {
+          if (field === 'items.product') {
+            if (Array.isArray(doc.items)) {
+              for (const item of doc.items) {
+                if (item.product) {
+                  const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
+                  const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [idVal]);
+                  if (refRows.length > 0) {
+                    item.product = { _id: refRows[0]._id, ...refRows[0].data };
+                  }
+                }
+              }
+            }
+            continue;
+          }
+
           if (field === 'orderItems.product') {
             if (Array.isArray(doc.orderItems)) {
               for (const item of doc.orderItems) {
                 if (item.product) {
-                  const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [item.product]);
+                  const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
+                  const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [idVal]);
                   if (refRows.length > 0) {
                     item.product = { _id: refRows[0]._id, ...refRows[0].data };
                   }
