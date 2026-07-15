@@ -79,7 +79,15 @@ const initializeTables = async () => {
       );
     `);
   }
-  console.log('Database tables initialized successfully');
+
+  // Create indexes on JSONB fields for optimized lookups
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_carts_user ON carts ((data->>'user'));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_wishlists_user ON wishlists ((data->>'user'));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_user ON orders ((data->>'user'));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_addresses_user ON addresses ((data->>'user'));`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_email ON users ((data->>'email'));`);
+
+  console.log('Database tables and indexes initialized successfully');
 };
 
 const TABLE_DEFAULTS = {
@@ -382,64 +390,105 @@ class QueryChain {
         fields = [fields];
       }
       for (const field of fields) {
+        if (field === 'items.product' || field === 'orderItems.product') {
+          const productIds = new Set();
+          for (const doc of docs) {
+            const arrayField = field === 'items.product' ? doc.items : doc.orderItems;
+            if (Array.isArray(arrayField)) {
+              for (const item of arrayField) {
+                if (item.product) {
+                  const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
+                  if (idVal) productIds.add(idVal);
+                }
+              }
+            }
+          }
+
+          if (productIds.size > 0) {
+            const idArray = Array.from(productIds);
+            const { rows: refRows } = await pool.query(
+              `SELECT * FROM products WHERE _id = ANY($1)`,
+              [idArray]
+            );
+            const refMap = new Map();
+            for (const row of refRows) {
+              refMap.set(row._id, { _id: row._id, ...row.data });
+            }
+
+            for (const doc of docs) {
+              const arrayField = field === 'items.product' ? doc.items : doc.orderItems;
+              if (Array.isArray(arrayField)) {
+                for (const item of arrayField) {
+                  if (item.product) {
+                    const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
+                    if (refMap.has(idVal)) {
+                      item.product = refMap.get(idVal);
+                    }
+                  }
+                }
+              }
+            }
+          }
+          continue;
+        }
+
+        // Flat fields
+        let refTable;
+        if (field === 'category') refTable = 'categories';
+        else if (field === 'user') refTable = 'users';
+        else if (field === 'products') refTable = 'products';
+        else refTable = `${field}s`;
+
+        const refIds = new Set();
         for (const doc of docs) {
-          if (field === 'items.product') {
-            if (Array.isArray(doc.items)) {
-              for (const item of doc.items) {
-                if (item.product) {
-                  const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
-                  const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [idVal]);
-                  if (refRows.length > 0) {
-                    item.product = { _id: refRows[0]._id, ...refRows[0].data };
-                  }
-                }
-              }
-            }
-            continue;
-          }
-
-          if (field === 'orderItems.product') {
-            if (Array.isArray(doc.orderItems)) {
-              for (const item of doc.orderItems) {
-                if (item.product) {
-                  const idVal = typeof item.product === 'object' && item.product._id ? item.product._id : item.product;
-                  const { rows: refRows } = await pool.query(`SELECT * FROM products WHERE _id = $1`, [idVal]);
-                  if (refRows.length > 0) {
-                    item.product = { _id: refRows[0]._id, ...refRows[0].data };
-                  }
-                }
-              }
-            }
-            continue;
-          }
-
           const refId = doc[field];
           if (refId) {
-            let refTable;
-            if (field === 'category') refTable = 'categories';
-            else if (field === 'user') refTable = 'users';
-            else if (field === 'products') refTable = 'products';
-            else refTable = `${field}s`;
-
             if (Array.isArray(refId)) {
-              const populatedList = [];
               for (const singleId of refId) {
                 const idVal = typeof singleId === 'object' && singleId._id ? singleId._id : singleId;
-                const { rows: refRows } = await pool.query(`SELECT * FROM ${refTable} WHERE _id = $1`, [idVal]);
-                if (refRows.length > 0) {
-                  populatedList.push({ _id: refRows[0]._id, ...refRows[0].data });
-                }
+                if (idVal) refIds.add(idVal);
               }
-              doc[field] = populatedList;
             } else {
               const idVal = typeof refId === 'object' && refId._id ? refId._id : refId;
-              const { rows: refRows } = await pool.query(`SELECT * FROM ${refTable} WHERE _id = $1`, [idVal]);
-              if (refRows.length > 0) {
-                doc[field] = { _id: refRows[0]._id, ...refRows[0].data };
+              if (idVal) refIds.add(idVal);
+            }
+          }
+        }
+
+        if (refIds.size > 0) {
+          const idArray = Array.from(refIds);
+          const { rows: refRows } = await pool.query(
+            `SELECT * FROM ${refTable} WHERE _id = ANY($1)`,
+            [idArray]
+          );
+          const refMap = new Map();
+          for (const row of refRows) {
+            refMap.set(row._id, { _id: row._id, ...row.data });
+          }
+
+          for (const doc of docs) {
+            const refId = doc[field];
+            if (refId) {
+              if (Array.isArray(refId)) {
+                const populatedList = [];
+                for (const singleId of refId) {
+                  const idVal = typeof singleId === 'object' && singleId._id ? singleId._id : singleId;
+                  if (refMap.has(idVal)) {
+                    populatedList.push(refMap.get(idVal));
+                  }
+                }
+                doc[field] = populatedList;
+              } else {
+                const idVal = typeof refId === 'object' && refId._id ? refId._id : refId;
+                if (refMap.has(idVal)) {
+                  doc[field] = refMap.get(idVal);
+                }
               }
             }
           }
         }
+      }
+    }
       }
     }
 
